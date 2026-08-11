@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detecção de Mudanças SR2D4</title>
+    <style>
+        body { font-family: 'Avenir Next', sans-serif; padding: 20px; background-color: #f8f8f8; }
+        .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #323232; font-size: 18px; margin-top: 0; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 14px; }
+        input[type="date"] { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #0079c1; color: white; border: none; padding: 10px 15px; width: 100%; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background-color: #005e95; }
+        #status { margin-top: 15px; font-size: 14px; color: #d83020; font-weight: bold; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Análise Macro e Detalhamento (1m)</h2>
+    
+    <label for="data_inicio">Data Inicial (Data 1):</label>
+    <input type="date" id="data_inicio" required>
+
+    <label for="data_fim">Data Final (Data 2):</label>
+    <input type="date" id="data_fim" required>
+
+    <button onclick="dispararProcessamento()">Rodar Detecção</button>
+
+    <div id="status"></div>
+</div>
+
+<script>
+    function dispararProcessamento() {
+        const data1 = document.getElementById('data_inicio').value;
+        const data2 = document.getElementById('data_fim').value;
+        const statusDiv = document.getElementById('status');
+
+        if (!data1 || !data2) {
+            statusDiv.innerText = "Por favor, selecione ambas as datas.";
+            statusDiv.style.color = "#d83020";
+            return;
+        }
+
+        statusDiv.innerText = "Enviando requisição para os servidores... Isso pode demorar alguns minutos.";
+        statusDiv.style.color = "#0079c1";
+
+        // AQUI ENTRA A URL DO SEU WEBHOOK (A PONTE)
+        const urlWebhook = "https://sua-url-do-webhook-aqui.com";
+
+        // Dispara as datas para o seu script Python através do Webhook
+        fetch(urlWebhook, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data_inicio: data1, data_fim: data2 })
+        })
+        .then(response => {
+            if(response.ok) {
+                statusDiv.innerText = "✅ Processamento concluído! Atualize o mapa para ver os resultados.";
+                statusDiv.style.color = "#2b8a3e";
+            } else {
+                statusDiv.innerText = "❌ Erro ao processar. Tente novamente.";
+                statusDiv.style.color = "#d83020";
+            }
+        })
+        .catch(error => {
+            statusDiv.innerText = "❌ Falha na conexão com o servidor de processamento.";
+            statusDiv.style.color = "#d83020";
+        });
+    }
+</script>
+
+</body>
+</html>
