@@ -198,23 +198,31 @@
         drawnItems.clearLayers();
         var layer = event.layer;
         drawnItems.addLayer(layer);
-        aoiGeoJSON = layer.toGeoJSON();
+        aoiGeoJSON = drawnItems.toGeoJSON();
     });
 
     // Evento de Upload de GeoJSON
     document.getElementById('file_upload').addEventListener('change', function(e) {
         var file = e.target.files[0];
         if (file) {
+            // Verifica se o arquivo é .geojson (trava de segurança)
+            if (!file.name.toLowerCase().endsWith('.geojson')) {
+                alert("Por favor, suba apenas arquivos no formato .geojson!");
+                return;
+            }
+
             var reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     var geojson = JSON.parse(e.target.result);
-                    drawnItems.clearLayers();
-                    var layer = L.geoJSON(geojson).addTo(drawnItems);
-                    map.fitBounds(layer.getBounds());
-                    aoiGeoJSON = geojson;
+                    drawnItems.clearLayers(); // Limpa desenhos anteriores
+                    var layer = L.geoJSON(geojson).addTo(drawnItems); // Joga pro mapa
+                    map.fitBounds(layer.getBounds()); // Dá zoom na área do upload
+                    
+                    // A MÁGICA AQUI: Pega o que subiu e padroniza pra Lista pro Python não reclamar!
+                    aoiGeoJSON = drawnItems.toGeoJSON(); 
                 } catch (err) {
-                    alert("Erro ao ler o GeoJSON. Verifique o arquivo.");
+                    alert("Erro ao ler o GeoJSON. Verifique se o arquivo está corrompido.");
                 }
             };
             reader.readAsText(file);
