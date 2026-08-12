@@ -3,72 +3,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detecção de Mudanças SR2D4</title>
+    <title>DF Legal | Detecção SR2D4</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Avenir Next', sans-serif; padding: 20px; background-color: #f8f8f8; }
-        .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h2 { color: #323232; font-size: 18px; margin-top: 0; }
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 14px; }
-        input[type="date"] { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { background-color: #0079c1; color: white; border: none; padding: 10px 15px; width: 100%; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        button:hover { background-color: #005e95; }
-        #status { margin-top: 15px; font-size: 14px; color: #d83020; font-weight: bold; text-align: center; }
+        :root {
+            --primary: #0056b3;
+            --secondary: #007bff;
+            --bg: #f4f7f6;
+            --text: #333;
+            --border: #ddd;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 100%;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--primary);
+        }
+        .header i {
+            font-size: 24px;
+            margin-right: 10px;
+            color: var(--primary);
+        }
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 600px) {
+            .grid-layout { grid-template-columns: 1fr; }
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input[type="date"], input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 13px;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+        }
+        #map {
+            height: 250px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            z-index: 1;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            width: 100%;
+            transition: 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary:hover {
+            background-color: #004494;
+        }
+        .btn-primary:disabled {
+            background-color: #999;
+            cursor: not-allowed;
+        }
+        #status-box {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 13px;
+            display: none;
+            font-weight: bold;
+            text-align: center;
+        }
+        .status-loading { background: #e2f0fe; color: #0056b3; border: 1px solid #b6d4fe; }
+        .status-success { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .status-error { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Análise Macro e Detalhamento (1m)</h2>
-    
-    <label for="data_inicio">Data Inicial (Data 1):</label>
-    <input type="date" id="data_inicio" required>
+<div class="app-container">
+    <div class="header">
+        <i class="fa-solid fa-satellite"></i>
+        <h2>DF Legal | Detecção Inteligente SR2D4</h2>
+    </div>
 
-    <label for="data_fim">Data Final (Data 2):</label>
-    <input type="date" id="data_fim" required>
+    <div class="grid-layout">
+        <div class="controls">
+            <div class="form-group">
+                <label>Data 1 (Referência):</label>
+                <input type="date" id="data_inicio">
+            </div>
+            <div class="form-group">
+                <label>Data 2 (Atual):</label>
+                <input type="date" id="data_fim">
+            </div>
+            <div class="form-group">
+                <label>Cobertura Máx. de Nuvens: <span id="cloud-val">20</span>%</label>
+                <div class="slider-container">
+                    <input type="range" id="cloud_cover" min="0" max="100" value="20" oninput="document.getElementById('cloud-val').innerText = this.value">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Subir AOI (GeoJSON) - Opcional:</label>
+                <input type="file" id="file_upload" accept=".geojson,application/geo+json">
+            </div>
+        </div>
 
-    <button onclick="dispararProcessamento()">Rodar Detecção</button>
+        <div class="map-section">
+            <div class="form-group">
+                <label>Área de Interesse (Desenhe no mapa):</label>
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
 
-    <div id="status"></div>
+    <button class="btn-primary" id="btn-processar" onclick="dispararProcessamento()">
+        <i class="fa-solid fa-microchip"></i> Iniciar Processamento
+    </button>
+
+    <div id="status-box"></div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
 <script>
+    // 1. Configuração do Mapa Leaflet
+    var map = L.map('map').setView([-15.7942, -47.8821], 10); // Centralizado no DF
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+
+    // Ferramenta de desenho
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+    var drawControl = new L.Control.Draw({
+        draw: { polyline: false, polygon: false, circle: false, marker: false, circlemarker: false,
+                rectangle: { shapeOptions: { color: '#0056b3' } } },
+        edit: { featureGroup: drawnItems }
+    });
+    map.addControl(drawControl);
+
+    var aoiGeoJSON = null; // Guarda a geometria selecionada
+
+    // Evento ao desenhar no mapa
+    map.on(L.Draw.Event.CREATED, function (event) {
+        drawnItems.clearLayers();
+        var layer = event.layer;
+        drawnItems.addLayer(layer);
+        aoiGeoJSON = layer.toGeoJSON();
+    });
+
+    // Evento de Upload de GeoJSON
+    document.getElementById('file_upload').addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var geojson = JSON.parse(e.target.result);
+                    drawnItems.clearLayers();
+                    var layer = L.geoJSON(geojson).addTo(drawnItems);
+                    map.fitBounds(layer.getBounds());
+                    aoiGeoJSON = geojson;
+                } catch (err) {
+                    alert("Erro ao ler o GeoJSON. Verifique o arquivo.");
+                }
+            };
+            reader.readAsText(file);
+        }
+    });
+
+    // 2. Função de Envio para o Backend
     function dispararProcessamento() {
         const data1 = document.getElementById('data_inicio').value;
         const data2 = document.getElementById('data_fim').value;
-        const statusDiv = document.getElementById('status');
+        const nuvens = document.getElementById('cloud_cover').value;
+        const statusBox = document.getElementById('status-box');
+        const btn = document.getElementById('btn-processar');
 
         if (!data1 || !data2) {
-            statusDiv.innerText = "Por favor, selecione ambas as datas.";
-            statusDiv.style.color = "#d83020";
+            mostrarStatus('Por favor, preencha as duas datas.', 'error');
+            return;
+        }
+        if (!aoiGeoJSON) {
+            mostrarStatus('Por favor, desenhe uma área no mapa ou faça upload de um GeoJSON.', 'error');
             return;
         }
 
-        statusDiv.innerText = "Enviando requisição para os servidores... Isso pode demorar alguns minutos.";
-        statusDiv.style.color = "#0079c1";
+        // URL DO RENDER (Já preenchida para você)
+        const urlWebhook = "https://backend-dflegal.onrender.com/rodar-deteccao";
 
-        // AQUI ENTRA A URL DO SEU WEBHOOK (A PONTE)
-        const urlWebhook = "const urlWebhook = "https://backend-dflegal.onrender.com/rodar-deteccao";
-        // Dispara as datas para o seu script Python através do Webhook
+        // Prepara visual de carregamento
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando no Servidor...';
+        mostrarStatus('Enviando imagens para a IA... Isso pode levar vários minutos.', 'loading');
+
+        // Dispara requisição
         fetch(urlWebhook, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data_inicio: data1, data_fim: data2 })
+            body: JSON.stringify({ 
+                data_inicio: data1, 
+                data_fim: data2, 
+                nuvens: parseFloat(nuvens),
+                geometria: aoiGeoJSON 
+            })
         })
-        .then(response => {
-            if(response.ok) {
-                statusDiv.innerText = "✅ Processamento concluído! Atualize o mapa para ver os resultados.";
-                statusDiv.style.color = "#2b8a3e";
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === "sucesso") {
+                mostrarStatus('✅ Análise concluída! Atualize o mapa do ArcGIS para ver os resultados.', 'success');
             } else {
-                statusDiv.innerText = "❌ Erro ao processar. Tente novamente.";
-                statusDiv.style.color = "#d83020";
+                mostrarStatus('❌ Erro: ' + data.mensagem, 'error');
             }
         })
         .catch(error => {
-            statusDiv.innerText = "❌ Falha na conexão com o servidor de processamento.";
-            statusDiv.style.color = "#d83020";
+            mostrarStatus('❌ Erro de comunicação com o servidor Render. Verifique se ele está ligado.', 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-microchip"></i> Iniciar Processamento';
         });
     }
-</script>
 
+    function mostrarStatus(mensagem, tipo) {
+        const statusBox = document.getElementById('status-box');
+        statusBox.style.display = 'block';
+        statusBox.className = 'status-' + tipo;
+        statusBox.innerText = mensagem;
+    }
+</script>
 </body>
 </html>
