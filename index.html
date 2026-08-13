@@ -175,7 +175,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-
+<script src="https://cdn.jsdelivr.net/gh/digidem/leaflet-side-by-side/leaflet-side-by-side.min.js"></script>
 <script>
     // 1. Configuração do Mapa Leaflet
     var map = L.map('map').setView([-15.7942, -47.8821], 10); // Centralizado no DF
@@ -230,6 +230,12 @@
     });
 
     // 2. Função de Envio para o Backend
+    
+    // Variáveis globais para o Swipe não bugar se rodar duas vezes
+    var s2Layer1 = null;
+    var s2Layer2 = null;
+    var swipeControl = null;
+
     function dispararProcessamento() {
         const data1 = document.getElementById('data_inicio').value;
         const data2 = document.getElementById('data_fim').value;
@@ -246,7 +252,7 @@
             return;
         }
 
-        // URL DO RENDER (Já preenchida para você)
+        // URL DO RENDER
         const urlWebhook = "https://backend-dflegal.onrender.com/rodar-deteccao";
 
         // Prepara visual de carregamento
@@ -268,11 +274,45 @@
         .then(response => response.json())
         .then(data => {
             if(data.status === "sucesso") {
-                // Checa se o Python mandou a mensagem de "Nenhuma mudança"
                 if (data.mensagem.includes("Nenhuma mudança")) {
-                    mostrarStatus('⚠️ Aviso: ' + data.mensagem, 'error'); // Usa a sua caixa vermelha para alertar
+                    mostrarStatus('⚠️ Aviso: ' + data.mensagem, 'error');
                 } else {
-                    mostrarStatus('✅ Sucesso: ' + data.mensagem, 'success'); // Usa a sua caixa verde
+                    mostrarStatus('✅ Sucesso: ' + data.mensagem, 'success');
+                    
+                    // --- MÁGICA DO SWIPE E IMAGENS ---
+                    if(data.tile1 && data.tile2) {
+                        // Limpa layers anteriores se existirem
+                        if(s2Layer1) map.removeLayer(s2Layer1);
+                        if(s2Layer2) map.removeLayer(s2Layer2);
+                        if(swipeControl) map.removeControl(swipeControl);
+
+                        // Adiciona as imagens do Sentinel 10m no mapa
+                        s2Layer1 = L.tileLayer(data.tile1).addTo(map);
+                        s2Layer2 = L.tileLayer(data.tile2).addTo(map);
+
+                        // Adiciona a barra de Swipe
+                        swipeControl = L.control.sideBySide(s2Layer1, s2Layer2).addTo(map);
+                    }
+
+                    // --- CAIXA DE INFORMAÇÕES E BOTÃO SR2D4 ---
+                    let infoBox = document.getElementById('info-extra');
+                    if(!infoBox) {
+                        infoBox = document.createElement('div');
+                        infoBox.id = 'info-extra';
+                        document.getElementById('status-box').parentNode.appendChild(infoBox);
+                    }
+                    
+                    infoBox.innerHTML = `
+                        <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; text-align: center;">
+                            <p style="margin: 0 0 10px 0; font-size: 13px; color: #333;">
+                                <strong>📸 Imagens carregadas no mapa:</strong> Sentinel-2 (10m) das datas selecionadas. <br>
+                                <em>Use a barra vertical no mapa para comparar (Swipe) o Antes e o Depois.</em>
+                            </p>
+                            <a href="https://colab.research.google.com/drive/1EMOKxmlOEJcRaFGxAcnjfx2l67BpVwHg" target="_blank" style="display:inline-block; padding: 10px 20px; background: #000; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;">
+                                <i class="fa-solid fa-microscope"></i> Abrir Colab IA (Detalhar Alertas em 1 Metro)
+                            </a>
+                        </div>
+                    `;
                 }
             } else {
                 mostrarStatus('❌ Erro: ' + data.mensagem, 'error');
