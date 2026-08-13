@@ -10,123 +10,25 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <style>
-        :root {
-            --primary: #0056b3;
-            --secondary: #007bff;
-            --bg: #f4f7f6;
-            --text: #333;
-            --border: #ddd;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 15px;
-            box-sizing: border-box;
-        }
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            max-width: 100%;
-        }
-        .header {
-            display: flex;
-            align-items: center;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 10px;
-        }
-        .header h2 {
-            margin: 0;
-            font-size: 18px;
-            color: var(--primary);
-        }
-        .header i {
-            font-size: 24px;
-            margin-right: 10px;
-            color: var(--primary);
-        }
-        .controls-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 10px;
-        }
-        @media (max-width: 600px) {
-            .controls-grid { grid-template-columns: 1fr; }
-        }
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: #555;
-        }
-        input[type="date"], input[type="file"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            font-size: 13px;
-        }
+        :root { --primary: #0056b3; --bg: #f4f7f6; --text: #333; --border: #ddd; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        .app-container { display: flex; flex-direction: column; gap: 15px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 100%; }
+        .header { display: flex; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+        .header h2 { margin: 0; font-size: 18px; color: var(--primary); }
+        .header i { font-size: 24px; margin-right: 10px; color: var(--primary); }
+        .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 600px) { .controls-grid { grid-template-columns: 1fr; } }
+        .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input[type="date"], input[type="file"] { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; box-sizing: border-box; }
         .slider-container { display: flex; align-items: center; gap: 10px; }
         input[type="range"] { flex-grow: 1; }
-        
-        .map-section {
-            width: 100%;
-            margin-top: 10px;
-        }
-        #map {
-            height: 400px; /* MAPA MAIOR AGORA */
-            width: 100%;
-            border-radius: 8px;
-            border: 2px solid var(--primary);
-            z-index: 1;
-        }
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: bold;
-            width: 100%;
-            transition: 0.3s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
+        .step-title { font-weight: bold; color: var(--primary); margin-top: 10px; font-size: 14px; }
+        #map { height: 350px; width: 100%; border-radius: 8px; border: 2px solid var(--border); z-index: 1; }
+        .btn-primary { background-color: var(--primary); color: white; border: none; padding: 14px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.3s; margin-top: 10px; }
         .btn-primary:hover { background-color: #004494; }
         .btn-primary:disabled { background-color: #999; cursor: not-allowed; }
-        
-        .btn-swipe {
-            background-color: #17a2b8;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        
-        #status-box {
-            padding: 12px;
-            border-radius: 5px;
-            font-size: 14px;
-            display: none;
-            font-weight: bold;
-            text-align: center;
-        }
+        .btn-swipe { background-color: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; margin-top: 10px; }
+        #status-box { padding: 12px; border-radius: 5px; font-size: 14px; display: none; font-weight: bold; text-align: center; }
         .status-loading { background: #e2f0fe; color: #0056b3; border: 1px solid #b6d4fe; }
         .status-success { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
         .status-error { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
@@ -136,42 +38,26 @@
 
 <div class="app-container">
     <div class="header">
-        <i class="fa-solid fa-satellite"></i>
-        <h2>DF Legal | Detecção Inteligente SR2D4</h2>
+        <i class="fa-solid fa-satellite"></i><h2>DF Legal | Detecção Inteligente SR2D4</h2>
     </div>
 
+    <div class="step-title"><i class="fa-regular fa-calendar"></i> 1º Passo: Defina o Período e Nuvens</div>
     <div class="controls-grid">
-        <div class="form-group">
-            <label>Data 1 (Referência):</label>
-            <input type="date" id="data_inicio">
-        </div>
-        <div class="form-group">
-            <label>Data 2 (Atual):</label>
-            <input type="date" id="data_fim">
-        </div>
-        <div class="form-group">
-            <label>Cobertura Máx. Nuvens: <span id="cloud-val">20</span>%</label>
-            <div class="slider-container">
-                <input type="range" id="cloud_cover" min="0" max="100" value="20" oninput="document.getElementById('cloud-val').innerText = this.value">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Subir AOI (GeoJSON) - Opcional:</label>
-            <input type="file" id="file_upload" accept=".geojson,application/geo+json">
-        </div>
+        <div class="form-group"><label>Data 1 (Referência):</label><input type="date" id="data_inicio"></div>
+        <div class="form-group"><label>Data 2 (Atual):</label><input type="date" id="data_fim"></div>
+        <div class="form-group"><label>Máx. Nuvens: <span id="cloud-val">20</span>%</label><div class="slider-container"><input type="range" id="cloud_cover" min="0" max="100" value="20" oninput="document.getElementById('cloud-val').innerText = this.value"></div></div>
+        <div class="form-group"><label>Subir AOI (GeoJSON):</label><input type="file" id="file_upload" accept=".geojson,application/geo+json"></div>
     </div>
+
+    <div class="step-title"><i class="fa-solid fa-draw-polygon"></i> 2º Passo: Desenhe a Área no Mapa (ou faça upload acima)</div>
+    <div id="map"></div>
 
     <button class="btn-primary" id="btn-processar" onclick="dispararProcessamento()">
-        <i class="fa-solid fa-microchip"></i> Iniciar Processamento
+        <i class="fa-solid fa-microchip"></i> 3º Passo: Iniciar Processamento
     </button>
 
     <div id="status-box"></div>
     <div id="info-extra"></div>
-
-    <div class="map-section">
-        <label style="font-weight: bold; color: #0056b3;"><i class="fa-solid fa-draw-polygon"></i> 1º Passo: Desenhe a Área de Interesse aqui:</label>
-        <div id="map"></div>
-    </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -180,64 +66,49 @@
 
 <script>
     var map = L.map('map').setView([-15.7942, -47.8821], 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, zIndex: 1 }).addTo(map);
 
     var drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
     var drawControl = new L.Control.Draw({
-        draw: { polyline: false, polygon: false, circle: false, marker: false, circlemarker: false,
-                rectangle: { shapeOptions: { color: '#0056b3', weight: 3 } } },
+        draw: { polyline: false, polygon: false, circle: false, marker: false, circlemarker: false, rectangle: { shapeOptions: { color: '#0056b3', weight: 3 } } },
         edit: { featureGroup: drawnItems }
     });
     map.addControl(drawControl);
-
     var aoiGeoJSON = null;
 
     map.on(L.Draw.Event.CREATED, function (event) {
         drawnItems.clearLayers();
-        var layer = event.layer;
-        drawnItems.addLayer(layer);
+        drawnItems.addLayer(event.layer);
         aoiGeoJSON = drawnItems.toGeoJSON();
     });
 
     document.getElementById('file_upload').addEventListener('change', function(e) {
         var file = e.target.files[0];
         if (file) {
-            if (!file.name.toLowerCase().endsWith('.geojson')) {
-                alert("Por favor, suba apenas arquivos no formato .geojson!");
-                return;
-            }
             var reader = new FileReader();
             reader.onload = function(e) {
-                try {
-                    var geojson = JSON.parse(e.target.result);
-                    drawnItems.clearLayers();
-                    var layer = L.geoJSON(geojson).addTo(drawnItems);
-                    map.fitBounds(layer.getBounds());
-                    aoiGeoJSON = drawnItems.toGeoJSON(); 
-                } catch (err) {
-                    alert("Erro ao ler o GeoJSON.");
-                }
+                var geojson = JSON.parse(e.target.result);
+                drawnItems.clearLayers();
+                var layer = L.geoJSON(geojson).addTo(drawnItems);
+                map.fitBounds(layer.getBounds());
+                aoiGeoJSON = drawnItems.toGeoJSON(); 
             };
             reader.readAsText(file);
         }
     });
 
-    // Variáveis globais para o Swipe
     var s2Layer1 = null;
     var s2Layer2 = null;
     var swipeControl = null;
     var swipeAtivo = false;
 
-    // Função Ligar/Desligar Swipe
     function toggleSwipe() {
         if(swipeAtivo) {
             if(swipeControl) map.removeControl(swipeControl);
             swipeAtivo = false;
         } else {
-            if(s2Layer1 && s2Layer2) {
-                swipeControl = L.control.sideBySide(s2Layer1, s2Layer2).addTo(map);
-            }
+            if(s2Layer1 && s2Layer2) swipeControl = L.control.sideBySide(s2Layer1, s2Layer2).addTo(map);
             swipeAtivo = true;
         }
     }
@@ -246,98 +117,69 @@
         const data1 = document.getElementById('data_inicio').value;
         const data2 = document.getElementById('data_fim').value;
         const nuvens = document.getElementById('cloud_cover').value;
-        const statusBox = document.getElementById('status-box');
         const btn = document.getElementById('btn-processar');
 
-        if (!data1 || !data2) {
-            mostrarStatus('Por favor, preencha as duas datas.', 'error');
-            return;
-        }
-        if (!aoiGeoJSON) {
-            mostrarStatus('Por favor, desenhe uma área no mapa.', 'error');
-            return;
+        if (!data1 || !data2 || !aoiGeoJSON) {
+            mostrarStatus('Preencha as datas e desenhe a área!', 'error'); return;
         }
 
         const urlWebhook = "https://backend-dflegal.onrender.com/rodar-deteccao";
-
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analisando Satélite...';
-        mostrarStatus('Lendo imagens, calculando e enviando para o ArcGIS... Pode levar alguns minutos.', 'loading');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analisando...';
+        mostrarStatus('Enviando para o ArcGIS. Aguarde...', 'loading');
 
         fetch(urlWebhook, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                data_inicio: data1, 
-                data_fim: data2, 
-                nuvens: parseFloat(nuvens),
-                geometria: aoiGeoJSON 
-            })
+            body: JSON.stringify({ data_inicio: data1, data_fim: data2, nuvens: parseFloat(nuvens), geometria: aoiGeoJSON })
         })
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
             if(data.status === "sucesso") {
                 if (data.mensagem.includes("Nenhuma mudança")) {
                     mostrarStatus('⚠️ ' + data.mensagem, 'error');
                 } else {
-                    mostrarStatus('✅ ' + data.mensagem + ' Verifique o mapa do ArcGIS acima.', 'success');
+                    mostrarStatus('✅ ' + data.mensagem + ' Olhe o mapa do ArcGIS!', 'success');
                     
                     if(data.tile1 && data.tile2) {
                         if(s2Layer1) map.removeLayer(s2Layer1);
                         if(s2Layer2) map.removeLayer(s2Layer2);
                         if(swipeControl) map.removeControl(swipeControl);
 
-                        s2Layer1 = L.tileLayer(data.tile1).addTo(map);
-                        s2Layer2 = L.tileLayer(data.tile2).addTo(map);
-
-                        // Ativa o swipe por padrão
+                        // O SEGREDO DO SWIPE ESTÁ AQUI: zIndex força a ordem das camadas
+                        s2Layer1 = L.tileLayer(data.tile1, {zIndex: 10}).addTo(map);
+                        s2Layer2 = L.tileLayer(data.tile2, {zIndex: 20}).addTo(map);
                         swipeControl = L.control.sideBySide(s2Layer1, s2Layer2).addTo(map);
                         swipeAtivo = true;
                     }
 
                     let infoBox = document.getElementById('info-extra');
-                    if(!infoBox) {
-                        infoBox = document.createElement('div');
-                        infoBox.id = 'info-extra';
-                        document.getElementById('status-box').parentNode.insertBefore(infoBox, document.querySelector('.map-section'));
-                    }
-                    
-                    // DATAS REAIS E BOTÃO DE SWIPE
                     infoBox.innerHTML = `
                         <div style="margin-top: 15px; padding: 15px; background: #e9ecef; border-left: 5px solid #0056b3; border-radius: 4px;">
-                            <p style="margin: 0 0 10px 0; font-size: 14px; color: #333;">
-                                <i class="fa-regular fa-calendar-check"></i> <strong>Imagens de Satélite (10m) Encontradas:</strong><br>
-                                Antes: <b>${data.data_real1}</b> &nbsp;|&nbsp; Depois: <b>${data.data_real2}</b>
+                            <p style="margin: 0 0 10px 0; font-size: 14px;">
+                                <strong>Satélites utilizados:</strong> Antes: <b>${data.data_real1}</b> | Depois: <b>${data.data_real2}</b>
                             </p>
-                            
-                            <button class="btn-swipe" onclick="toggleSwipe()"><i class="fa-solid fa-sliders"></i> Ligar / Desligar Cortina (Swipe)</button>
-                            
-                            <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
-                            
-                            <a href="https://colab.research.google.com/drive/1EMOKxmlOEJcRaFGxAcnjfx2l67BpVwHg" target="_blank" style="display:inline-block; padding: 10px 20px; background: #212529; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; width: 100%; box-sizing: border-box; text-align: center;">
-                                <i class="fa-solid fa-microscope"></i> Abrir Colab IA (Gerar Imagens 1 Metro)
+                            <button class="btn-swipe" onclick="toggleSwipe()"><i class="fa-solid fa-sliders"></i> Ligar/Desligar Swipe</button>
+                            <hr style="margin: 15px 0;">
+                            <a href="https://colab.research.google.com/drive/1EMOKxmlOEJcRaFGxAcnjfx2l67BpVwHg" target="_blank" style="display:block; padding: 10px; background: #212529; color: #fff; text-align: center; border-radius: 5px; font-weight: bold; text-decoration: none;">
+                                <i class="fa-solid fa-microscope"></i> 4º Passo: Abrir Colab IA (Imagens 1 Metro)
                             </a>
-                        </div>
-                    `;
+                        </div>`;
                 }
             } else {
-                mostrarStatus('❌ Erro: ' + data.mensagem, 'error');
+                mostrarStatus('❌ ' + data.mensagem, 'error');
             }
         })
-        .catch(error => {
-            mostrarStatus('❌ Erro de comunicação com o Render.', 'error');
-        })
+        .catch(() => mostrarStatus('❌ Erro de servidor.', 'error'))
         .finally(() => {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-microchip"></i> Iniciar Processamento';
+            btn.innerHTML = '<i class="fa-solid fa-microchip"></i> 3º Passo: Iniciar Processamento';
         });
     }
 
     function mostrarStatus(mensagem, tipo) {
-        const statusBox = document.getElementById('status-box');
-        statusBox.style.display = 'block';
-        statusBox.className = 'status-' + tipo;
-        statusBox.innerText = mensagem;
+        const box = document.getElementById('status-box');
+        box.style.display = 'block'; box.className = 'status-' + tipo; box.innerText = mensagem;
     }
 </script>
 </body>
