@@ -268,7 +268,12 @@
         .then(response => response.json())
         .then(data => {
             if(data.status === "sucesso") {
-                mostrarStatus('✅ Análise concluída! Atualize o mapa do ArcGIS para ver os resultados.', 'success');
+                // Checa se o Python mandou a mensagem de "Nenhuma mudança"
+                if (data.mensagem.includes("Nenhuma mudança")) {
+                    mostrarStatus('⚠️ Aviso: ' + data.mensagem, 'error'); // Usa a sua caixa vermelha para alertar
+                } else {
+                    mostrarStatus('✅ Sucesso: ' + data.mensagem, 'success'); // Usa a sua caixa verde
+                }
             } else {
                 mostrarStatus('❌ Erro: ' + data.mensagem, 'error');
             }
