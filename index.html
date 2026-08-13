@@ -22,8 +22,8 @@
         input[type="date"], input[type="file"] { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; box-sizing: border-box; }
         .slider-container { display: flex; align-items: center; gap: 10px; }
         input[type="range"] { flex-grow: 1; }
-        .step-title { font-weight: bold; color: var(--primary); margin-top: 10px; font-size: 14px; }
-        #map { height: 350px; width: 100%; border-radius: 8px; border: 2px solid var(--border); z-index: 1; }
+        .step-title { font-weight: bold; color: var(--primary); margin-top: 10px; font-size: 16px; border-bottom: 2px solid #e9ecef; padding-bottom: 5px; }
+        #map { height: 400px; width: 100%; border-radius: 8px; border: 2px solid var(--border); z-index: 1; }
         .btn-primary { background-color: var(--primary); color: white; border: none; padding: 14px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.3s; margin-top: 10px; }
         .btn-primary:hover { background-color: #004494; }
         .btn-primary:disabled { background-color: #999; cursor: not-allowed; }
@@ -32,32 +32,46 @@
         .status-loading { background: #e2f0fe; color: #0056b3; border: 1px solid #b6d4fe; }
         .status-success { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
         .status-error { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+        
+        #passo2-colab { display: none; margin-top: 10px; padding: 20px; background: #e9ecef; border-left: 6px solid #212529; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="header">
-        <i class="fa-solid fa-satellite"></i><h2>DF Legal | Detecção Inteligente SR2D4</h2>
+        <i class="fa-solid fa-satellite"></i><h2>DF Legal | Sistema de Monitoramento</h2>
     </div>
 
-    <div class="step-title"><i class="fa-regular fa-calendar"></i> 1º Passo: Defina o Período e Nuvens</div>
+    <div class="step-title"><i class="fa-solid fa-radar"></i> 1º Passo: Detecção Rápida (Radar 10m)</div>
     <div class="controls-grid">
         <div class="form-group"><label>Data 1 (Referência):</label><input type="date" id="data_inicio"></div>
         <div class="form-group"><label>Data 2 (Atual):</label><input type="date" id="data_fim"></div>
         <div class="form-group"><label>Máx. Nuvens: <span id="cloud-val">20</span>%</label><div class="slider-container"><input type="range" id="cloud_cover" min="0" max="100" value="20" oninput="document.getElementById('cloud-val').innerText = this.value"></div></div>
         <div class="form-group"><label>Subir AOI (GeoJSON):</label><input type="file" id="file_upload" accept=".geojson,application/geo+json"></div>
     </div>
-
-    <div class="step-title"><i class="fa-solid fa-draw-polygon"></i> 2º Passo: Desenhe a Área no Mapa (ou faça upload acima)</div>
+    
+    <label style="font-size: 13px; font-weight: bold; color: #555;"><i class="fa-solid fa-draw-polygon"></i> Desenhe a área no mapa (ou faça upload acima):</label>
     <div id="map"></div>
 
     <button class="btn-primary" id="btn-processar" onclick="dispararProcessamento()">
-        <i class="fa-solid fa-microchip"></i> 3º Passo: Iniciar Processamento
+        <i class="fa-solid fa-search"></i> Iniciar Varredura no Mapa
     </button>
 
     <div id="status-box"></div>
     <div id="info-extra"></div>
+
+    <div id="passo2-colab">
+        <p style="margin: 0 0 10px 0; font-size: 16px; color: #333; font-weight: bold;">
+            <i class="fa-solid fa-microscope"></i> 2º Passo: Inteligência Artificial SR2D4 (1 metro)
+        </p>
+        <p style="margin: 0 0 15px 0; font-size: 14px; color: #555;">
+            Os alertas foram gerados no mapa acima. Para extrair as imagens de altíssima resolução desses alertas para o relatório, abra o laboratório de processamento:
+        </p>
+        <a href="https://colab.research.google.com/drive/1EMOKxmlOEJcRaFGxAcnjfx2l67BpVwHg" target="_blank" style="display:block; padding: 14px; background: #212529; color: #fff; text-align: center; border-radius: 5px; font-weight: bold; text-decoration: none; font-size: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <i class="fa-solid fa-brain"></i> Abrir Colab IA
+        </a>
+    </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -119,6 +133,10 @@
         const nuvens = document.getElementById('cloud_cover').value;
         const btn = document.getElementById('btn-processar');
 
+        // Esconde o botão do Colab ao iniciar nova pesquisa
+        document.getElementById('passo2-colab').style.display = 'none';
+        document.getElementById('info-extra').innerHTML = '';
+
         if (!data1 || !data2 || !aoiGeoJSON) {
             mostrarStatus('Preencha as datas e desenhe a área!', 'error'); return;
         }
@@ -126,7 +144,7 @@
         const urlWebhook = "https://backend-dflegal.onrender.com/rodar-deteccao";
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analisando...';
-        mostrarStatus('Enviando para o ArcGIS. Aguarde...', 'loading');
+        mostrarStatus('Varrendo imagens com o satélite e calculando diferenças. Aguarde...', 'loading');
 
         fetch(urlWebhook, {
             method: 'POST',
@@ -139,41 +157,40 @@
                 if (data.mensagem.includes("Nenhuma mudança")) {
                     mostrarStatus('⚠️ ' + data.mensagem, 'error');
                 } else {
-                    mostrarStatus('✅ ' + data.mensagem + ' Olhe o mapa do ArcGIS!', 'success');
+                    mostrarStatus('✅ ' + data.mensagem + ' Confira o mapa do ArcGIS atualizado.', 'success');
                     
                     if(data.tile1 && data.tile2) {
                         if(s2Layer1) map.removeLayer(s2Layer1);
                         if(s2Layer2) map.removeLayer(s2Layer2);
                         if(swipeControl) map.removeControl(swipeControl);
 
-                        // O SEGREDO DO SWIPE ESTÁ AQUI: zIndex força a ordem das camadas
                         s2Layer1 = L.tileLayer(data.tile1, {zIndex: 10}).addTo(map);
                         s2Layer2 = L.tileLayer(data.tile2, {zIndex: 20}).addTo(map);
                         swipeControl = L.control.sideBySide(s2Layer1, s2Layer2).addTo(map);
                         swipeAtivo = true;
                     }
 
+                    // Mostra as datas e botão de cortina (Swipe)
                     let infoBox = document.getElementById('info-extra');
                     infoBox.innerHTML = `
-                        <div style="margin-top: 15px; padding: 15px; background: #e9ecef; border-left: 5px solid #0056b3; border-radius: 4px;">
+                        <div style="margin-top: 15px; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
                             <p style="margin: 0 0 10px 0; font-size: 14px;">
                                 <strong>Satélites utilizados:</strong> Antes: <b>${data.data_real1}</b> | Depois: <b>${data.data_real2}</b>
                             </p>
-                            <button class="btn-swipe" onclick="toggleSwipe()"><i class="fa-solid fa-sliders"></i> Ligar/Desligar Swipe</button>
-                            <hr style="margin: 15px 0;">
-                            <a href="https://colab.research.google.com/drive/1EMOKxmlOEJcRaFGxAcnjfx2l67BpVwHg" target="_blank" style="display:block; padding: 10px; background: #212529; color: #fff; text-align: center; border-radius: 5px; font-weight: bold; text-decoration: none;">
-                                <i class="fa-solid fa-microscope"></i> 4º Passo: Abrir Colab IA (Imagens 1 Metro)
-                            </a>
+                            <button class="btn-swipe" onclick="toggleSwipe()"><i class="fa-solid fa-sliders"></i> Ligar/Desligar Swipe no Mapa Acima</button>
                         </div>`;
+                        
+                    // MÁGICA AQUI: Mostra o "2º Passo" (Colab) lá embaixo da página!
+                    document.getElementById('passo2-colab').style.display = 'block';
                 }
             } else {
                 mostrarStatus('❌ ' + data.mensagem, 'error');
             }
         })
-        .catch(() => mostrarStatus('❌ Erro de servidor.', 'error'))
+        .catch(() => mostrarStatus('❌ Erro de comunicação com o Render.', 'error'))
         .finally(() => {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-microchip"></i> 3º Passo: Iniciar Processamento';
+            btn.innerHTML = '<i class="fa-solid fa-search"></i> Iniciar Varredura no Mapa';
         });
     }
 
