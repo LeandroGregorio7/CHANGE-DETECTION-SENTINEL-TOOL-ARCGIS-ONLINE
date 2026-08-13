@@ -51,20 +51,18 @@
             margin-right: 10px;
             color: var(--primary);
         }
-        .grid-layout {
+        .controls-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 15px;
+            margin-bottom: 10px;
         }
         @media (max-width: 600px) {
-            .grid-layout { grid-template-columns: 1fr; }
-        }
-        .form-group {
-            margin-bottom: 12px;
+            .controls-grid { grid-template-columns: 1fr; }
         }
         .form-group label {
             display: block;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             margin-bottom: 5px;
             color: #555;
@@ -74,21 +72,20 @@
             padding: 8px;
             border: 1px solid var(--border);
             border-radius: 5px;
-            box-sizing: border-box;
             font-size: 13px;
         }
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        input[type="range"] {
-            flex-grow: 1;
+        .slider-container { display: flex; align-items: center; gap: 10px; }
+        input[type="range"] { flex-grow: 1; }
+        
+        .map-section {
+            width: 100%;
+            margin-top: 10px;
         }
         #map {
-            height: 250px;
+            height: 400px; /* MAPA MAIOR AGORA */
+            width: 100%;
             border-radius: 8px;
-            border: 1px solid var(--border);
+            border: 2px solid var(--primary);
             z-index: 1;
         }
         .btn-primary {
@@ -98,7 +95,7 @@
             padding: 12px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
             width: 100%;
             transition: 0.3s;
@@ -107,18 +104,25 @@
             align-items: center;
             gap: 8px;
         }
-        .btn-primary:hover {
-            background-color: #004494;
-        }
-        .btn-primary:disabled {
-            background-color: #999;
-            cursor: not-allowed;
-        }
-        #status-box {
-            margin-top: 10px;
-            padding: 10px;
+        .btn-primary:hover { background-color: #004494; }
+        .btn-primary:disabled { background-color: #999; cursor: not-allowed; }
+        
+        .btn-swipe {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 8px 15px;
             border-radius: 5px;
+            cursor: pointer;
             font-size: 13px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        #status-box {
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 14px;
             display: none;
             font-weight: bold;
             text-align: center;
@@ -136,33 +140,24 @@
         <h2>DF Legal | Detecção Inteligente SR2D4</h2>
     </div>
 
-    <div class="grid-layout">
-        <div class="controls">
-            <div class="form-group">
-                <label>Data 1 (Referência):</label>
-                <input type="date" id="data_inicio">
-            </div>
-            <div class="form-group">
-                <label>Data 2 (Atual):</label>
-                <input type="date" id="data_fim">
-            </div>
-            <div class="form-group">
-                <label>Cobertura Máx. de Nuvens: <span id="cloud-val">20</span>%</label>
-                <div class="slider-container">
-                    <input type="range" id="cloud_cover" min="0" max="100" value="20" oninput="document.getElementById('cloud-val').innerText = this.value">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Subir AOI (GeoJSON) - Opcional:</label>
-                <input type="file" id="file_upload" accept=".geojson,application/geo+json">
+    <div class="controls-grid">
+        <div class="form-group">
+            <label>Data 1 (Referência):</label>
+            <input type="date" id="data_inicio">
+        </div>
+        <div class="form-group">
+            <label>Data 2 (Atual):</label>
+            <input type="date" id="data_fim">
+        </div>
+        <div class="form-group">
+            <label>Cobertura Máx. Nuvens: <span id="cloud-val">20</span>%</label>
+            <div class="slider-container">
+                <input type="range" id="cloud_cover" min="0" max="100" value="20" oninput="document.getElementById('cloud-val').innerText = this.value">
             </div>
         </div>
-
-        <div class="map-section">
-            <div class="form-group">
-                <label>Área de Interesse (Desenhe no mapa):</label>
-                <div id="map"></div>
-            </div>
+        <div class="form-group">
+            <label>Subir AOI (GeoJSON) - Opcional:</label>
+            <input type="file" id="file_upload" accept=".geojson,application/geo+json">
         </div>
     </div>
 
@@ -171,6 +166,12 @@
     </button>
 
     <div id="status-box"></div>
+    <div id="info-extra"></div>
+
+    <div class="map-section">
+        <label style="font-weight: bold; color: #0056b3;"><i class="fa-solid fa-draw-polygon"></i> 1º Passo: Desenhe a Área de Interesse aqui:</label>
+        <div id="map"></div>
+    </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -178,23 +179,20 @@
 <script src="https://cdn.jsdelivr.net/gh/digidem/leaflet-side-by-side/leaflet-side-by-side.min.js"></script>
 
 <script>
-    // 1. Configuração do Mapa Leaflet
-    var map = L.map('map').setView([-15.7942, -47.8821], 10); // Centralizado no DF
+    var map = L.map('map').setView([-15.7942, -47.8821], 10);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
 
-    // Ferramenta de desenho
     var drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
     var drawControl = new L.Control.Draw({
         draw: { polyline: false, polygon: false, circle: false, marker: false, circlemarker: false,
-                rectangle: { shapeOptions: { color: '#0056b3' } } },
+                rectangle: { shapeOptions: { color: '#0056b3', weight: 3 } } },
         edit: { featureGroup: drawnItems }
     });
     map.addControl(drawControl);
 
-    var aoiGeoJSON = null; // Guarda a geometria selecionada
+    var aoiGeoJSON = null;
 
-    // Evento ao desenhar no mapa
     map.on(L.Draw.Event.CREATED, function (event) {
         drawnItems.clearLayers();
         var layer = event.layer;
@@ -202,7 +200,6 @@
         aoiGeoJSON = drawnItems.toGeoJSON();
     });
 
-    // Evento de Upload de GeoJSON
     document.getElementById('file_upload').addEventListener('change', function(e) {
         var file = e.target.files[0];
         if (file) {
@@ -210,7 +207,6 @@
                 alert("Por favor, suba apenas arquivos no formato .geojson!");
                 return;
             }
-
             var reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -218,22 +214,33 @@
                     drawnItems.clearLayers();
                     var layer = L.geoJSON(geojson).addTo(drawnItems);
                     map.fitBounds(layer.getBounds());
-                    
                     aoiGeoJSON = drawnItems.toGeoJSON(); 
                 } catch (err) {
-                    alert("Erro ao ler o GeoJSON. Verifique se o arquivo está corrompido.");
+                    alert("Erro ao ler o GeoJSON.");
                 }
             };
             reader.readAsText(file);
         }
     });
 
-    // 2. Função de Envio para o Backend
-    
-    // Variáveis globais para o Swipe não bugar se rodar duas vezes
+    // Variáveis globais para o Swipe
     var s2Layer1 = null;
     var s2Layer2 = null;
     var swipeControl = null;
+    var swipeAtivo = false;
+
+    // Função Ligar/Desligar Swipe
+    function toggleSwipe() {
+        if(swipeAtivo) {
+            if(swipeControl) map.removeControl(swipeControl);
+            swipeAtivo = false;
+        } else {
+            if(s2Layer1 && s2Layer2) {
+                swipeControl = L.control.sideBySide(s2Layer1, s2Layer2).addTo(map);
+            }
+            swipeAtivo = true;
+        }
+    }
 
     function dispararProcessamento() {
         const data1 = document.getElementById('data_inicio').value;
@@ -247,19 +254,16 @@
             return;
         }
         if (!aoiGeoJSON) {
-            mostrarStatus('Por favor, desenhe uma área no mapa ou faça upload de um GeoJSON.', 'error');
+            mostrarStatus('Por favor, desenhe uma área no mapa.', 'error');
             return;
         }
 
-        // URL DO RENDER
         const urlWebhook = "https://backend-dflegal.onrender.com/rodar-deteccao";
 
-        // Prepara visual de carregamento
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando no Servidor...';
-        mostrarStatus('Enviando imagens para a IA... Isso pode levar vários minutos.', 'loading');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analisando Satélite...';
+        mostrarStatus('Lendo imagens, calculando e enviando para o ArcGIS... Pode levar alguns minutos.', 'loading');
 
-        // Dispara requisição
         fetch(urlWebhook, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -274,41 +278,44 @@
         .then(data => {
             if(data.status === "sucesso") {
                 if (data.mensagem.includes("Nenhuma mudança")) {
-                    mostrarStatus('⚠️ Aviso: ' + data.mensagem, 'error');
+                    mostrarStatus('⚠️ ' + data.mensagem, 'error');
                 } else {
-                    mostrarStatus('✅ Sucesso: ' + data.mensagem, 'success');
+                    mostrarStatus('✅ ' + data.mensagem + ' Verifique o mapa do ArcGIS acima.', 'success');
                     
-                    // --- MÁGICA DO SWIPE E IMAGENS ---
                     if(data.tile1 && data.tile2) {
-                        // Limpa layers anteriores se existirem
                         if(s2Layer1) map.removeLayer(s2Layer1);
                         if(s2Layer2) map.removeLayer(s2Layer2);
                         if(swipeControl) map.removeControl(swipeControl);
 
-                        // Adiciona as imagens do Sentinel 10m no mapa
                         s2Layer1 = L.tileLayer(data.tile1).addTo(map);
                         s2Layer2 = L.tileLayer(data.tile2).addTo(map);
 
-                        // Adiciona a barra de Swipe
+                        // Ativa o swipe por padrão
                         swipeControl = L.control.sideBySide(s2Layer1, s2Layer2).addTo(map);
+                        swipeAtivo = true;
                     }
 
-                    // --- CAIXA DE INFORMAÇÕES E BOTÃO SR2D4 ---
                     let infoBox = document.getElementById('info-extra');
                     if(!infoBox) {
                         infoBox = document.createElement('div');
                         infoBox.id = 'info-extra';
-                        document.getElementById('status-box').parentNode.appendChild(infoBox);
+                        document.getElementById('status-box').parentNode.insertBefore(infoBox, document.querySelector('.map-section'));
                     }
                     
+                    // DATAS REAIS E BOTÃO DE SWIPE
                     infoBox.innerHTML = `
-                        <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; text-align: center;">
-                            <p style="margin: 0 0 10px 0; font-size: 13px; color: #333;">
-                                <strong>📸 Imagens carregadas no mapa:</strong> Sentinel-2 (10m) das datas selecionadas. <br>
-                                <em>Use a barra vertical no mapa para comparar (Swipe) o Antes e o Depois.</em>
+                        <div style="margin-top: 15px; padding: 15px; background: #e9ecef; border-left: 5px solid #0056b3; border-radius: 4px;">
+                            <p style="margin: 0 0 10px 0; font-size: 14px; color: #333;">
+                                <i class="fa-regular fa-calendar-check"></i> <strong>Imagens de Satélite (10m) Encontradas:</strong><br>
+                                Antes: <b>${data.data_real1}</b> &nbsp;|&nbsp; Depois: <b>${data.data_real2}</b>
                             </p>
-                            <a href="https://colab.research.google.com/drive/1EMOKxmlOEJcRaFGxAcnjfx2l67BpVwHg" target="_blank" style="display:inline-block; padding: 10px 20px; background: #000; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;">
-                                <i class="fa-solid fa-microscope"></i> Abrir Colab IA (Detalhar Alertas em 1 Metro)
+                            
+                            <button class="btn-swipe" onclick="toggleSwipe()"><i class="fa-solid fa-sliders"></i> Ligar / Desligar Cortina (Swipe)</button>
+                            
+                            <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
+                            
+                            <a href="https://colab.research.google.com/drive/1EMOKxmlOEJcRaFGxAcnjfx2l67BpVwHg" target="_blank" style="display:inline-block; padding: 10px 20px; background: #212529; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; width: 100%; box-sizing: border-box; text-align: center;">
+                                <i class="fa-solid fa-microscope"></i> Abrir Colab IA (Gerar Imagens 1 Metro)
                             </a>
                         </div>
                     `;
@@ -318,7 +325,7 @@
             }
         })
         .catch(error => {
-            mostrarStatus('❌ Erro de comunicação com o servidor Render. Verifique se ele está ligado.', 'error');
+            mostrarStatus('❌ Erro de comunicação com o Render.', 'error');
         })
         .finally(() => {
             btn.disabled = false;
