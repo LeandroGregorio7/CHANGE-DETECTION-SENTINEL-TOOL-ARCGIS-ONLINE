@@ -1,203 +1,530 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DF Legal | Detecção SR2D4</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <style>
-        :root { --primary: #0056b3; --bg: #f4f7f6; --text: #333; --border: #ddd; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        .app-container { display: flex; flex-direction: column; gap: 15px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 100%; }
-        .header { display: flex; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
-        .header h2 { margin: 0; font-size: 18px; color: var(--primary); }
-        .header i { font-size: 24px; margin-right: 10px; color: var(--primary); }
-        .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        @media (max-width: 600px) { .controls-grid { grid-template-columns: 1fr; } }
-        .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input[type="date"], input[type="file"] { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; box-sizing: border-box; }
-        .slider-container { display: flex; align-items: center; gap: 10px; }
-        input[type="range"] { flex-grow: 1; }
-        .step-title { font-weight: bold; color: var(--primary); margin-top: 10px; font-size: 16px; border-bottom: 2px solid #e9ecef; padding-bottom: 5px; }
-        #map { height: 400px; width: 100%; border-radius: 8px; border: 2px solid var(--border); z-index: 1; }
-        .btn-primary { background-color: var(--primary); color: white; border: none; padding: 14px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.3s; margin-top: 10px; }
-        .btn-primary:hover { background-color: #004494; }
-        .btn-primary:disabled { background-color: #999; cursor: not-allowed; }
-        .btn-swipe { background-color: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; margin-top: 10px; }
-        #status-box { padding: 12px; border-radius: 5px; font-size: 14px; display: none; font-weight: bold; text-align: center; }
-        .status-loading { background: #e2f0fe; color: #0056b3; border: 1px solid #b6d4fe; }
-        .status-success { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-        .status-error { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
-        
-        #passo2-colab { display: none; margin-top: 10px; padding: 20px; background: #e9ecef; border-left: 6px solid #212529; border-radius: 4px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DF Legal | Detecção SR2D4</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #0056b3;
+      --primary-dark: #003f84;
+      --cyan: #087f8c;
+      --bg: #f4f7f6;
+      --text: #25313c;
+      --muted: #5d6872;
+      --border: #d8dee4;
+      --success-bg: #d1e7dd;
+      --success-text: #0f5132;
+      --error-bg: #f8d7da;
+      --error-text: #842029;
+      --warning-bg: #fff3cd;
+      --warning-text: #664d03;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 15px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .app-container {
+      width: min(100%, 980px);
+      margin: 0 auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .10);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .header i { color: var(--primary); font-size: 24px; }
+    .header h1 { margin: 0; color: var(--primary); font-size: 19px; }
+
+    .step-title {
+      margin-top: 18px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e9ecef;
+      color: var(--primary);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+      margin-top: 14px;
+    }
+
+    .form-group label,
+    .map-help {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input[type="date"],
+    input[type="file"],
+    input[type="range"] {
+      width: 100%;
+    }
+
+    input[type="date"], input[type="file"] {
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: #fff;
+      font-size: 13px;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 34px;
+    }
+
+    #map {
+      position: relative;
+      width: 100%;
+      height: 440px;
+      margin-top: 8px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #dfe8ee;
+      z-index: 1;
+    }
+
+    /* Mantém o controle da cortina acima dos tiles e impede que o arraste
+       do polegar seja interpretado como pan do mapa. */
+    #map .leaflet-control-container { z-index: 1100; }
+    #map .leaflet-sbs { z-index: 1100; }
+    #map .leaflet-sbs-range { z-index: 1101; }
+    #map .leaflet-sbs-divider {
+      width: 4px;
+      margin-left: -2px;
+      background: #fff;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, .35), 0 0 8px rgba(0, 0, 0, .35);
+    }
+
+    .btn-primary,
+    .btn-swipe,
+    .btn-secondary {
+      border: 0;
+      border-radius: 5px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      transition: background-color .2s ease, opacity .2s ease;
+    }
+
+    .btn-primary {
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px;
+      background: var(--primary);
+      font-size: 16px;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-primary:disabled { background: #999; cursor: not-allowed; }
+
+    .btn-swipe { padding: 9px 14px; background: var(--cyan); font-size: 13px; }
+    .btn-swipe:hover { background: #05636d; }
+
+    .btn-secondary {
+      display: inline-block;
+      padding: 10px 14px;
+      background: #212529;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .btn-secondary:hover { background: #000; }
+
+    #status-box {
+      display: none;
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 5px;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .status-loading { background: #e2f0fe; color: var(--primary); border: 1px solid #b6d4fe; }
+    .status-success { background: var(--success-bg); color: var(--success-text); border: 1px solid #badbcc; }
+    .status-error { background: var(--error-bg); color: var(--error-text); border: 1px solid #f5c2c7; }
+    .status-warning { background: var(--warning-bg); color: var(--warning-text); border: 1px solid #ffecb5; }
+
+    #info-extra { margin-top: 14px; }
+    .result-card {
+      padding: 15px;
+      background: #f8f9fa;
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--cyan);
+      border-radius: 5px;
+    }
+    .result-card p { margin: 0 0 10px; font-size: 14px; }
+    .result-card small { color: var(--muted); }
+    .result-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 13px; }
+    .class-summary { margin: 10px 0 0; padding-left: 20px; }
+    .class-summary li { margin: 3px 0; }
+
+    .hidden { display: none !important; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 8px; }
+      .app-container { padding: 14px; }
+      .controls-grid { grid-template-columns: 1fr; }
+      #map { height: 360px; }
+      .result-actions > * { width: 100%; text-align: center; }
+    }
+  </style>
 </head>
 <body>
+  <main class="app-container">
+    <header class="header">
+      <i class="fa-solid fa-satellite" aria-hidden="true"></i>
+      <h1>DF Legal | Detecção Inteligente SR2D4</h1>
+    </header>
 
-<div class="app-container">
-    <div class="header">
-        <i class="fa-solid fa-satellite"></i><h2>DF Legal | Sistema de Monitoramento</h2>
-    </div>
+    <section aria-labelledby="step-one-title">
+      <div class="step-title" id="step-one-title">
+        <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+        1º Passo: defina o período e o limite de nuvens
+      </div>
+      <div class="controls-grid">
+        <div class="form-group">
+          <label for="data_inicio">Data 1 (referência)</label>
+          <input type="date" id="data_inicio" required>
+        </div>
+        <div class="form-group">
+          <label for="data_fim">Data 2 (atual)</label>
+          <input type="date" id="data_fim" required>
+        </div>
+        <div class="form-group">
+          <label for="cloud_cover">Máx. nuvens: <span id="cloud-val">20</span>%</label>
+          <div class="slider-container">
+            <input type="range" id="cloud_cover" min="0" max="100" value="20">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="file_upload">Subir AOI (GeoJSON)</label>
+          <input type="file" id="file_upload" accept=".geojson,.json,application/geo+json,application/json">
+        </div>
+      </div>
+    </section>
 
-    <div class="step-title"><i class="fa-solid fa-radar"></i> 1º Passo: Detecção Rápida (Radar 10m)</div>
-    <div class="controls-grid">
-        <div class="form-group"><label>Data 1 (Referência):</label><input type="date" id="data_inicio"></div>
-        <div class="form-group"><label>Data 2 (Atual):</label><input type="date" id="data_fim"></div>
-        <div class="form-group"><label>Máx. Nuvens: <span id="cloud-val">20</span>%</label><div class="slider-container"><input type="range" id="cloud_cover" min="0" max="100" value="20" oninput="document.getElementById('cloud-val').innerText = this.value"></div></div>
-        <div class="form-group"><label>Subir AOI (GeoJSON):</label><input type="file" id="file_upload" accept=".geojson,application/geo+json"></div>
-    </div>
-    
-    <label style="font-size: 13px; font-weight: bold; color: #555;"><i class="fa-solid fa-draw-polygon"></i> Desenhe a área no mapa (ou faça upload acima):</label>
-    <div id="map"></div>
+    <section aria-labelledby="step-two-title">
+      <div class="step-title" id="step-two-title">
+        <i class="fa-solid fa-draw-polygon" aria-hidden="true"></i>
+        2º Passo: desenhe a área de interesse no mapa ou carregue um GeoJSON
+      </div>
+      <p class="map-help">O retângulo desenhado será enviado como AOI para o Earth Engine.</p>
+      <div id="map" aria-label="Mapa para desenho da área de interesse"></div>
+    </section>
 
-    <button class="btn-primary" id="btn-processar" onclick="dispararProcessamento()">
-        <i class="fa-solid fa-search"></i> Iniciar Varredura no Mapa
+    <button class="btn-primary" id="btn-processar" type="button">
+      <i class="fa-solid fa-microchip" aria-hidden="true"></i>
+      3º Passo: iniciar processamento
     </button>
 
-    <div id="status-box"></div>
+    <div id="status-box" role="status" aria-live="polite"></div>
     <div id="info-extra"></div>
+  </main>
 
-    <div id="passo2-colab">
-        <p style="margin: 0 0 10px 0; font-size: 16px; color: #333; font-weight: bold;">
-            <i class="fa-solid fa-microscope"></i> 2º Passo: Inteligência Artificial SR2D4 (1 metro)
-        </p>
-        <p style="margin: 0 0 15px 0; font-size: 14px; color: #555;">
-            Os alertas foram gerados no mapa acima. Para extrair as imagens de altíssima resolução desses alertas para o relatório, abra o laboratório de processamento:
-        </p>
-        <a href="https://colab.research.google.com/drive/1EMOKxmlOEJcRaFGxAcnjfx2l67BpVwHg" target="_blank" style="display:block; padding: 14px; background: #212529; color: #fff; text-align: center; border-radius: 5px; font-weight: bold; text-decoration: none; font-size: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <i class="fa-solid fa-brain"></i> Abrir Colab IA
-        </a>
-    </div>
-</div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/digidem/leaflet-side-by-side@2.2.0/leaflet-side-by-side.min.js"></script>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/digidem/leaflet-side-by-side/leaflet-side-by-side.min.js"></script>
+  <script>
+    (() => {
+      "use strict";
 
-<script>
-    var map = L.map('map').setView([-15.7942, -47.8821], 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, zIndex: 1 }).addTo(map);
+      const WEBHOOK_URL = "https://backend-dflegal.onrender.com/rodar-deteccao";
+      const DEFAULT_SR2D4_URL = "https://colab.research.google.com/drive/1EMOKxmlOEJcRaFGxAcnjfx2l67BpVwHg";
 
-    var drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-    var drawControl = new L.Control.Draw({
-        draw: { polyline: false, polygon: false, circle: false, marker: false, circlemarker: false, rectangle: { shapeOptions: { color: '#0056b3', weight: 3 } } },
+      const statusBox = document.getElementById("status-box");
+      const infoBox = document.getElementById("info-extra");
+      const processButton = document.getElementById("btn-processar");
+      const cloudInput = document.getElementById("cloud_cover");
+      const cloudValue = document.getElementById("cloud-val");
+      const fileInput = document.getElementById("file_upload");
+
+      cloudInput.addEventListener("input", () => {
+        cloudValue.textContent = cloudInput.value;
+      });
+
+      const map = L.map("map", { preferCanvas: true }).setView([-15.7942, -47.8821], 10);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "© OpenStreetMap contributors",
+        zIndex: 200
+      }).addTo(map);
+
+      // Panes independentes: o plugin aplica clip somente nos containers dos
+      // dois tiles Sentinel, nunca no pane do OpenStreetMap.
+      map.createPane("sentinelBefore");
+      map.getPane("sentinelBefore").style.zIndex = 410;
+      map.createPane("sentinelAfter");
+      map.getPane("sentinelAfter").style.zIndex = 420;
+
+      const drawnItems = new L.FeatureGroup().addTo(map);
+      new L.Control.Draw({
+        draw: {
+          polyline: false,
+          polygon: false,
+          circle: false,
+          marker: false,
+          circlemarker: false,
+          rectangle: {
+            shapeOptions: { color: "#0056b3", weight: 3 }
+          }
+        },
         edit: { featureGroup: drawnItems }
-    });
-    map.addControl(drawControl);
-    var aoiGeoJSON = null;
+      }).addTo(map);
 
-    map.on(L.Draw.Event.CREATED, function (event) {
+      let aoiGeoJSON = null;
+      let sentinelBefore = null;
+      let sentinelAfter = null;
+      let swipeControl = null;
+
+      function syncAoiFromMap() {
+        aoiGeoJSON = drawnItems.getLayers().length ? drawnItems.toGeoJSON() : null;
+      }
+
+      map.on(L.Draw.Event.CREATED, (event) => {
         drawnItems.clearLayers();
         drawnItems.addLayer(event.layer);
-        aoiGeoJSON = drawnItems.toGeoJSON();
-    });
+        syncAoiFromMap();
+      });
+      map.on(L.Draw.Event.EDITED, syncAoiFromMap);
+      map.on(L.Draw.Event.DELETED, syncAoiFromMap);
 
-    document.getElementById('file_upload').addEventListener('change', function(e) {
-        var file = e.target.files[0];
-        if (file) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var geojson = JSON.parse(e.target.result);
-                drawnItems.clearLayers();
-                var layer = L.geoJSON(geojson).addTo(drawnItems);
-                map.fitBounds(layer.getBounds());
-                aoiGeoJSON = drawnItems.toGeoJSON(); 
-            };
-            reader.readAsText(file);
-        }
-    });
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) return;
 
-    var s2Layer1 = null;
-    var s2Layer2 = null;
-    var swipeControl = null;
-    var swipeAtivo = false;
-
-    function toggleSwipe() {
-        if(swipeAtivo) {
-            if(swipeControl) map.removeControl(swipeControl);
-            swipeAtivo = false;
-        } else {
-            if(s2Layer1 && s2Layer2) swipeControl = L.control.sideBySide(s2Layer1, s2Layer2).addTo(map);
-            swipeAtivo = true;
-        }
-    }
-
-    function dispararProcessamento() {
-        const data1 = document.getElementById('data_inicio').value;
-        const data2 = document.getElementById('data_fim').value;
-        const nuvens = document.getElementById('cloud_cover').value;
-        const btn = document.getElementById('btn-processar');
-
-        // Esconde o botão do Colab ao iniciar nova pesquisa
-        document.getElementById('passo2-colab').style.display = 'none';
-        document.getElementById('info-extra').innerHTML = '';
-
-        if (!data1 || !data2 || !aoiGeoJSON) {
-            mostrarStatus('Preencha as datas e desenhe a área!', 'error'); return;
-        }
-
-        const urlWebhook = "https://backend-dflegal.onrender.com/rodar-deteccao";
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analisando...';
-        mostrarStatus('Varrendo imagens com o satélite e calculando diferenças. Aguarde...', 'loading');
-
-        fetch(urlWebhook, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data_inicio: data1, data_fim: data2, nuvens: parseFloat(nuvens), geometria: aoiGeoJSON })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.status === "sucesso") {
-                if (data.mensagem.includes("Nenhuma mudança")) {
-                    mostrarStatus('⚠️ ' + data.mensagem, 'error');
-                } else {
-                    mostrarStatus('✅ ' + data.mensagem + ' Confira o mapa do ArcGIS atualizado.', 'success');
-                    
-                    if(data.tile1 && data.tile2) {
-                        if(s2Layer1) map.removeLayer(s2Layer1);
-                        if(s2Layer2) map.removeLayer(s2Layer2);
-                        if(swipeControl) map.removeControl(swipeControl);
-
-                        s2Layer1 = L.tileLayer(data.tile1, {zIndex: 10}).addTo(map);
-                        s2Layer2 = L.tileLayer(data.tile2, {zIndex: 20}).addTo(map);
-                        swipeControl = L.control.sideBySide(s2Layer1, s2Layer2).addTo(map);
-                        swipeAtivo = true;
-                    }
-
-                    // Mostra as datas e botão de cortina (Swipe)
-                    let infoBox = document.getElementById('info-extra');
-                    infoBox.innerHTML = `
-                        <div style="margin-top: 15px; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
-                            <p style="margin: 0 0 10px 0; font-size: 14px;">
-                                <strong>Satélites utilizados:</strong> Antes: <b>${data.data_real1}</b> | Depois: <b>${data.data_real2}</b>
-                            </p>
-                            <button class="btn-swipe" onclick="toggleSwipe()"><i class="fa-solid fa-sliders"></i> Ligar/Desligar Swipe no Mapa Acima</button>
-                        </div>`;
-                        
-                    // MÁGICA AQUI: Mostra o "2º Passo" (Colab) lá embaixo da página!
-                    document.getElementById('passo2-colab').style.display = 'block';
-                }
-            } else {
-                mostrarStatus('❌ ' + data.mensagem, 'error');
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const geojson = JSON.parse(event.target.result);
+            const layer = L.geoJSON(geojson);
+            if (!layer.getBounds().isValid()) {
+              throw new Error("O GeoJSON não contém uma geometria espacial válida.");
             }
-        })
-        .catch(() => mostrarStatus('❌ Erro de comunicação com o Render.', 'error'))
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-search"></i> Iniciar Varredura no Mapa';
-        });
-    }
+            drawnItems.clearLayers();
+            drawnItems.addLayer(layer);
+            map.fitBounds(layer.getBounds(), { padding: [20, 20] });
+            syncAoiFromMap();
+            mostrarStatus("AOI carregada. Confira a área no mapa antes de processar.", "success");
+          } catch (error) {
+            fileInput.value = "";
+            aoiGeoJSON = null;
+            mostrarStatus(`GeoJSON inválido: ${error.message}`, "error");
+          }
+        };
+        reader.readAsText(file);
+      });
 
-    function mostrarStatus(mensagem, tipo) {
-        const box = document.getElementById('status-box');
-        box.style.display = 'block'; box.className = 'status-' + tipo; box.innerText = mensagem;
-    }
-</script>
+      function destruirSwipe() {
+        if (swipeControl) {
+          swipeControl.remove();
+          swipeControl = null;
+        }
+        if (sentinelBefore) {
+          sentinelBefore.remove();
+          sentinelBefore = null;
+        }
+        if (sentinelAfter) {
+          sentinelAfter.remove();
+          sentinelAfter = null;
+        }
+      }
+
+      function criarSwipe(tileBefore, tileAfter) {
+        destruirSwipe();
+        if (!tileBefore || !tileAfter || typeof L.control.sideBySide !== "function") {
+          throw new Error("O plugin de swipe não foi carregado ou os tiles não foram retornados.");
+        }
+
+        sentinelBefore = L.tileLayer(tileBefore, {
+          pane: "sentinelBefore",
+          zIndex: 410,
+          maxZoom: 19,
+          crossOrigin: true
+        }).addTo(map);
+        sentinelAfter = L.tileLayer(tileAfter, {
+          pane: "sentinelAfter",
+          zIndex: 420,
+          maxZoom: 19,
+          crossOrigin: true
+        }).addTo(map);
+
+        // left = Antes; right = Depois. O controle corta apenas os containers
+        // destes dois TileLayers.
+        swipeControl = L.control.sideBySide(sentinelBefore, sentinelAfter).addTo(map);
+      }
+
+      function mostrarStatus(mensagem, tipo) {
+        statusBox.hidden = false;
+        statusBox.style.display = "block";
+        statusBox.className = `status-${tipo}`;
+        statusBox.textContent = mensagem;
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function renderClassSummary(summary) {
+        const entries = Object.entries(summary || {});
+        if (!entries.length) return "<li>Nenhuma classe detectada.</li>";
+        return entries
+          .map(([label, count]) => `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(count)} área(s)</li>`)
+          .join("");
+      }
+
+      async function parseResponse(response) {
+        const text = await response.text();
+        let data;
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          throw new Error(`Resposta inválida do servidor (HTTP ${response.status}).`);
+        }
+        if (!response.ok || data.status === "erro") {
+          throw new Error(data.mensagem || `Servidor respondeu HTTP ${response.status}.`);
+        }
+        return data;
+      }
+
+      function renderResult(data) {
+        const sr2d4Url = data.colab_url || DEFAULT_SR2D4_URL;
+        const total = Number(data.total_detectado || 0);
+        const before = data.data_real1_display || data.data_real1 || "não informado";
+        const after = data.data_real2_display || data.data_real2 || "não informado";
+
+        infoBox.innerHTML = `
+          <div class="result-card">
+            <p><strong>Imagens Sentinel-2 usadas no período:</strong><br>
+              Antes: <strong>${escapeHtml(before)}</strong> &nbsp;|&nbsp;
+              Depois: <strong>${escapeHtml(after)}</strong>
+            </p>
+            <small>As duas imagens de 10 m foram carregadas no mapa. Arraste a cortina branca no centro do mapa; o mapa-base não participa do swipe.</small>
+            <ul class="class-summary">${renderClassSummary(data.resumo_classes)}</ul>
+            <div class="result-actions">
+              <button class="btn-swipe" id="toggle-swipe" type="button">
+                <i class="fa-solid fa-sliders" aria-hidden="true"></i> Desligar swipe
+              </button>
+              <a class="btn-secondary" href="${escapeHtml(sr2d4Url)}" target="_blank" rel="noopener noreferrer">
+                <i class="fa-solid fa-microscope" aria-hidden="true"></i>
+                4º Passo: abrir SR2D4/Colab em nova aba
+              </a>
+            </div>
+            <small>Execução: ${escapeHtml(data.id_execucao || "não informado")} | ${total} área(s) detectada(s) | ${Number(data.total_inserido || 0)} acumulada(s) no ArcGIS.</small>
+          </div>`;
+
+        const toggleButton = document.getElementById("toggle-swipe");
+        let swipeOn = true;
+        toggleButton.addEventListener("click", () => {
+          if (swipeOn) {
+            if (swipeControl) swipeControl.remove();
+            toggleButton.innerHTML = '<i class="fa-solid fa-sliders" aria-hidden="true"></i> Ligar swipe';
+          } else {
+            swipeControl = L.control.sideBySide(sentinelBefore, sentinelAfter).addTo(map);
+            toggleButton.innerHTML = '<i class="fa-solid fa-sliders" aria-hidden="true"></i> Desligar swipe';
+          }
+          swipeOn = !swipeOn;
+        });
+      }
+
+      async function dispararProcessamento() {
+        const dataInicio = document.getElementById("data_inicio").value;
+        const dataFim = document.getElementById("data_fim").value;
+        const nuvens = Number(cloudInput.value);
+
+        if (!dataInicio || !dataFim || !aoiGeoJSON) {
+          mostrarStatus("Preencha as duas datas e desenhe/carregue a área de interesse.", "error");
+          return;
+        }
+        if (dataInicio > dataFim) {
+          mostrarStatus("Data 1 deve ser anterior ou igual à Data 2.", "error");
+          return;
+        }
+
+        processButton.disabled = true;
+        processButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Processando...';
+        infoBox.innerHTML = "";
+        destruirSwipe();
+        mostrarStatus("Buscando as imagens Sentinel-2 e calculando as mudanças. O processamento pode levar alguns minutos.", "loading");
+
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 190000);
+
+        try {
+          const response = await fetch(WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({
+              data_inicio: dataInicio,
+              data_fim: dataFim,
+              nuvens,
+              geometria: aoiGeoJSON
+            }),
+            signal: controller.signal
+          });
+          const data = await parseResponse(response);
+
+          criarSwipe(data.tile1, data.tile2);
+          mostrarStatus(`Sucesso: ${data.mensagem}`, "success");
+          renderResult(data);
+        } catch (error) {
+          const message = error.name === "AbortError"
+            ? "O processamento excedeu o tempo de espera do navegador. Confira os logs do Render antes de repetir."
+            : error.message || "Erro de comunicação com o servidor.";
+          mostrarStatus(`Erro: ${message}`, "error");
+        } finally {
+          window.clearTimeout(timeoutId);
+          processButton.disabled = false;
+          processButton.innerHTML = '<i class="fa-solid fa-microchip" aria-hidden="true"></i> 3º Passo: iniciar processamento';
+        }
+      }
+
+      processButton.addEventListener("click", dispararProcessamento);
+    })();
+  </script>
 </body>
 </html>
