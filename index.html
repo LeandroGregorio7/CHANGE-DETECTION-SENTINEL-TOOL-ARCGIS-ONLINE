@@ -279,7 +279,6 @@
       const cloudValue = document.getElementById("cloud-val");
       const fileInput = document.getElementById("file_upload");
       const dateHelp = document.getElementById("date-help");
-      const EARTH_ENGINE_LAG_DAYS = 5;
 
       function localDateToISO(date = new Date()) {
         const year = date.getFullYear();
@@ -301,8 +300,7 @@
       }
 
       function updateDateHelp() {
-        const latestAllowed = addDaysToISO(localDateToISO(), -EARTH_ENGINE_LAG_DAYS);
-        dateHelp.textContent = `Para evitar imagens ainda não catalogadas, use a Data 2 até ${formatISODateBR(latestAllowed)}.`;
+        dateHelp.textContent = "A Data 2 pode ser recente. O sistema procura automaticamente a cena Sentinel-2 disponível mais próxima da data informada.";
       }
 
       updateDateHelp();
@@ -455,7 +453,10 @@
           throw new Error(`Resposta inválida do servidor (HTTP ${response.status}).`);
         }
         if (!response.ok || data.status === "erro") {
-          throw new Error(data.mensagem || `Servidor respondeu HTTP ${response.status}.`);
+          const receivedDate = data.data_solicitada2
+            ? ` Data 2 recebida pelo servidor: ${formatISODateBR(data.data_solicitada2)}.`
+            : "";
+          throw new Error((data.mensagem || `Servidor respondeu HTTP ${response.status}.`) + receivedDate);
         }
         return data;
       }
@@ -465,10 +466,16 @@
         const total = Number(data.total_detectado || 0);
         const before = data.data_real1_display || data.data_real1 || "não informado";
         const after = data.data_real2_display || data.data_real2 || "não informado";
+        const requestedBefore = data.data_solicitada1_display || data.data_solicitada1 || "não informado";
+        const requestedAfter = data.data_solicitada2_display || data.data_solicitada2 || "não informado";
 
         infoBox.innerHTML = `
           <div class="result-card">
-            <p><strong>Imagens Sentinel-2 usadas no período:</strong><br>
+            <p><strong>Período solicitado:</strong><br>
+              Data 1: <strong>${escapeHtml(requestedBefore)}</strong> &nbsp;|&nbsp;
+              Data 2: <strong>${escapeHtml(requestedAfter)}</strong>
+            </p>
+            <p><strong>Imagens Sentinel-2 realmente usadas:</strong><br>
               Antes: <strong>${escapeHtml(before)}</strong> &nbsp;|&nbsp;
               Depois: <strong>${escapeHtml(after)}</strong>
             </p>
@@ -515,18 +522,9 @@
         }
 
         const hoje = localDateToISO();
-        const dataFimMinima = addDaysToISO(hoje, -EARTH_ENGINE_LAG_DAYS);
 
         if (dataFim > hoje) {
           mostrarStatus("A Data 2 não pode estar no futuro.", "error");
-          return;
-        }
-
-        if (dataFim > dataFimMinima) {
-          mostrarStatus(
-            `A Data 2 é muito recente para o Earth Engine. Use uma data até ${formatISODateBR(dataFimMinima)}; imagens podem levar alguns dias para serem catalogadas.`,
-            "warning"
-          );
           return;
         }
 
@@ -534,7 +532,10 @@
         processButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Processando...';
         infoBox.innerHTML = "";
         destruirSwipe();
-        mostrarStatus("Buscando as imagens Sentinel-2 e calculando as mudanças. O processamento pode levar alguns minutos.", "loading");
+        mostrarStatus(
+          `Enviando Data 1 ${formatISODateBR(dataInicio)} e Data 2 ${formatISODateBR(dataFim)}. Buscando as cenas Sentinel-2 mais próximas; o processamento pode levar alguns minutos.`,
+          "loading"
+        );
 
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), 190000);
@@ -543,6 +544,7 @@
           const response = await fetch(WEBHOOK_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            cache: "no-store",
             body: JSON.stringify({
               data_inicio: dataInicio,
               data_fim: dataFim,
