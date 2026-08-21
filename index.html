@@ -228,6 +228,7 @@
         <div class="form-group">
           <label for="data_fim">Data 2 (atual)</label>
           <input type="date" id="data_fim" required>
+          <small id="date-help" style="display:block;margin-top:5px;color:var(--muted);font-size:12px;"></small>
         </div>
         <div class="form-group">
           <label for="cloud_cover">Máx. nuvens: <span id="cloud-val">20</span>%</label>
@@ -277,6 +278,34 @@
       const cloudInput = document.getElementById("cloud_cover");
       const cloudValue = document.getElementById("cloud-val");
       const fileInput = document.getElementById("file_upload");
+      const dateHelp = document.getElementById("date-help");
+      const EARTH_ENGINE_LAG_DAYS = 5;
+
+      function localDateToISO(date = new Date()) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function addDaysToISO(isoDate, days) {
+        const [year, month, day] = isoDate.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        date.setDate(date.getDate() + days);
+        return localDateToISO(date);
+      }
+
+      function formatISODateBR(isoDate) {
+        const [year, month, day] = isoDate.split("-");
+        return `${day}/${month}/${year}`;
+      }
+
+      function updateDateHelp() {
+        const latestAllowed = addDaysToISO(localDateToISO(), -EARTH_ENGINE_LAG_DAYS);
+        dateHelp.textContent = `Para evitar imagens ainda não catalogadas, use a Data 2 até ${formatISODateBR(latestAllowed)}.`;
+      }
+
+      updateDateHelp();
 
       cloudInput.addEventListener("input", () => {
         cloudValue.textContent = cloudInput.value;
@@ -482,6 +511,22 @@
         }
         if (dataInicio > dataFim) {
           mostrarStatus("Data 1 deve ser anterior ou igual à Data 2.", "error");
+          return;
+        }
+
+        const hoje = localDateToISO();
+        const dataFimMinima = addDaysToISO(hoje, -EARTH_ENGINE_LAG_DAYS);
+
+        if (dataFim > hoje) {
+          mostrarStatus("A Data 2 não pode estar no futuro.", "error");
+          return;
+        }
+
+        if (dataFim > dataFimMinima) {
+          mostrarStatus(
+            `A Data 2 é muito recente para o Earth Engine. Use uma data até ${formatISODateBR(dataFimMinima)}; imagens podem levar alguns dias para serem catalogadas.`,
+            "warning"
+          );
           return;
         }
 
